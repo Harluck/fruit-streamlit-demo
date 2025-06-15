@@ -1,36 +1,35 @@
-import streamlit as st
-from tensorflow.keras.models import load_model
-from huggingface_hub import hf_hub_download
+ import streamlit as st
+import requests
 from PIL import Image
-import numpy as np
+import io
 
-st.set_page_config(page_title="Fruit Classifier 🍎", layout="centered")
-st.title("🍌🍎 Fruit Classifier App")
-st.write("Upload an image of a fruit, and the model will predict its type.")
+# Hugging Face API settings
+API_URL = "https://api-inference.huggingface.co/models/HareeshE/fruit-classifier-model"
+API_TOKEN = "your_huggingface_token_here"  # Optional for private models
 
-# Download model from Hugging Face
-with st.spinner("Loading model from Hugging Face..."):
-    model_path = hf_hub_download(
-        repo_id="HareeshE/fruit-classifier-model",
-        filename="fruit_classifier_model.h5"
-    )
-    model = load_model(model_path)
+headers = {"Authorization": f"Bearer {API_TOKEN}"} if API_TOKEN else {}
 
-# Upload image
+st.title("🍉 Fruit Image Classifier")
+st.write("Upload an image of a fruit and get the prediction.")
+
 uploaded_file = st.file_uploader("Choose a fruit image...", type=["jpg", "jpeg", "png"])
 
-if uploaded_file:
-    image = Image.open(uploaded_file).convert("RGB")
+if uploaded_file is not None:
+    image = Image.open(uploaded_file)
     st.image(image, caption="Uploaded Image", use_column_width=True)
 
-    img = image.resize((100, 100))
-    img_array = np.array(img) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
+    # Convert image to bytes
+    img_bytes = io.BytesIO()
+    image.save(img_bytes, format="JPEG")
+    img_bytes = img_bytes.getvalue()
 
-    prediction = model.predict(img_array)[0]
-    class_names = ["apple", "banana", "orange"]  # Customize if needed
-    predicted_class = class_names[np.argmax(prediction)]
-    confidence = np.max(prediction) * 100
+    with st.spinner("Classifying..."):
+        response = requests.post(API_URL, headers=headers, data=img_bytes)
 
-    st.success(f"✅ Prediction: **{predicted_class}**")
-    st.info(f"🔢 Confidence: **{confidence:.2f}%**")
+    try:
+        output = response.json()
+        prediction = output[0]["label"]
+        confidence = output[0]["score"] * 100
+        st.success(f"✅ Prediction: {prediction} ({confidence:.2f}%)")
+    except Exception as e:
+        st.error("❌ Error processing prediction. Check model deployment or API token.")
