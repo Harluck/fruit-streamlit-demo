@@ -2,10 +2,11 @@ import streamlit as st
 import requests
 from PIL import Image
 import io
+import os
 
 # Hugging Face API settings
 API_URL = "https://api-inference.huggingface.co/models/HareeshE/fruit-classifier-model"
-API_TOKEN = "your_huggingface_token_here"  # Optional for private models
+API_TOKEN = os.getenv("HF_TOKEN")
 
 headers = {"Authorization": f"Bearer {API_TOKEN}"} if API_TOKEN else {}
 
