@@ -1,4 +1,4 @@
-import streamlit as st
+ import streamlit as st
 import requests
 from PIL import Image
 import io
@@ -12,13 +12,13 @@ headers = {"Authorization": f"Bearer {API_TOKEN}"}
 def query(image_bytes):
     response = requests.post(API_URL, headers=headers, data=image_bytes)
 
-    # For debugging: show status and raw response
-    print("Status code:", response.status_code)
-    print("Response text:", response.text)
+    # ✅ (1) Print raw response to console (for logs/debug)
+    print("RAW RESPONSE:", response.text)
 
     try:
         return response.json()
     except requests.exceptions.JSONDecodeError as e:
+        # Return error + raw response
         return {"error": f"Failed to parse JSON: {str(e)}", "raw_response": response.text}
 
 # Streamlit UI
@@ -39,7 +39,9 @@ if uploaded_file is not None:
 
     if "error" in result:
         st.error(f"❌ Error: {result['error']}")
-        st.code(result.get("raw_response", ""), language="text")
+        
+        # ✅ (2) Show raw response in UI
+        st.code(result.get("raw_response", "No response received"), language="text")
     else:
         st.success("✅ Prediction complete!")
         st.write(result)
