@@ -9,27 +9,27 @@ API_URL = "https://api-inference.huggingface.co/models/HareeshE/fruit-classifier
 API_TOKEN = os.getenv("HF_TOKEN")
 headers = {"Authorization": f"Bearer {API_TOKEN}"}
 
-def query(payload):
-    response = requests.post(API_URL, headers=headers, json=payload)
+def query(image_bytes):
+    response = requests.post(API_URL, headers=headers, data=image_bytes)
     return response.json()
 
-st.title("Fruit Classifier")
+st.title("🍎 Fruit Classifier")
 
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+    st.image(image, caption="Uploaded Image", use_container_width=True)
 
     # Convert image to bytes
     image_bytes = io.BytesIO()
     image.save(image_bytes, format='PNG')
     image_bytes = image_bytes.getvalue()
 
-    with st.spinner("Classifying..."):
-        result = query({"inputs": image_bytes})
+    with st.spinner("🔍 Classifying..."):
+        result = query(image_bytes)
 
     if "error" in result:
-        st.error("Error processing prediction. Check model deployment or API token.")
+        st.error(f"❌ Error: {result['error']}")
     else:
-        st.success("Prediction complete!")
+        st.success("✅ Prediction complete!")
         st.write(result)
